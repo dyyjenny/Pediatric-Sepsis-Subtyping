@@ -13,41 +13,39 @@ library(tidyr)
 ```
 
 ```{r}
-df = read.csv(file = "./mods_day1_12hr.csv")
 df_clean = read.csv(file = "./vitals_trajectory_cleaned.csv")
 ```
 
 
 ```{r}
-tmp = df %>%
+tmp = df_clean %>%
   group_by(EncID) %>% 
-  filter(row_number()==1) %>%
-  mutate(died_hr_round = floor(died_hour))
+  filter(row_number()==1) 
 
-summary(tmp$died_hour)
-
-nrow(tmp %>%
-       filter(died_hr_round <=6))/
-  nrow(tmp %>%
-         filter(!is.na(died_hr_round)))
+summary(tmp$died_hour_round)
 
 nrow(tmp %>%
-       filter(died_hr_round <=12))/
+       filter(died_hour_round<=6))/
   nrow(tmp %>%
-         filter(!is.na(died_hr_round)))
+         filter(!is.na(died_hour_round)))
 
-ggplot(tmp, aes(x=died_hr_round)) + 
+nrow(tmp %>%
+       filter(died_hour_round <=12))/
+  nrow(tmp %>%
+         filter(!is.na(died_hour_round)))
+
+ggplot(tmp, aes(x=died_hour_round)) + 
   geom_histogram(binwidth=1) +
   ggtitle('Hour from Admission to Death (MODS=1 on Day1 Patients)')+
   theme_bw()
 
-ggplot(tmp, aes(x=died_hr_round)) + 
+ggplot(tmp, aes(x=died_hour_round)) + 
   geom_histogram(binwidth=1) +
   xlim(0,168) +
   ggtitle('Hour to Death 7-Day Zoom in')+
   theme_bw()
 
-ggplot(tmp, aes(x=died_hr_round)) + 
+ggplot(tmp, aes(x=died_hour_round)) + 
   geom_histogram(binwidth=1) +
   xlim(0,72) +
   ggtitle('Hour to Death 3-Day Zoom in') + 
@@ -90,8 +88,8 @@ ggplot(data=age_sum2, aes(x=fct_reorder(age_group, order), y=value, fill=count_t
 
 age_died_time = gather(tmp %>%
   group_by(age_group) %>%
-  summarise(died_time_mean = mean(died_hour,na.rm=TRUE),
-            died_time_median = median(died_hour,na.rm=TRUE))  %>%
+  summarise(died_time_mean = mean(died_hour_round,na.rm=TRUE),
+            died_time_median = median(died_hour_round,na.rm=TRUE))  %>%
   mutate (order = c(1,3,6,2,4,5)) %>%
   ungroup()%>%
   arrange(order), key = 'statistic', value = 'value',2:3)
@@ -105,19 +103,59 @@ ggplot(data=age_died_time, aes(x=fct_reorder(age_group, order), y=value, group=s
   theme_bw()
 
 ```
+```{r}
+hosp_sum = gather(tmp %>%
+  group_by(hospital_id) %>%
+  summarise(mods_day7 = sum(mods_day7)/n(),
+            died_in_hosp = sum(died_in_hosp)/n()),
+  key = 'count_type', value = 'value',2:3)
+
+ggplot(data=hosp_sum, aes(x=hospital_id, y=value, fill=count_type)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  xlab('hospital id') +
+  ylab('proportion of hospital patients')+
+  ggtitle('Ratio of Death in Hospital and MODS Day7 per Hospital')+
+  theme_bw()
+
+```
 
 ```{r}
 per_hr_count = df_clean %>%
   group_by(event_name, event_hour) %>%
   summarize(n = n_distinct(EncID)) 
 
-ggplot(data=per_hr_count, aes(x=event_hour, y=n, group=event_name)) +
+alive_hr = df_clean %>%
+  mutate(died_hour_whole = round(died_hour_round)) %>%
+  filter(!is.na(died_hour_round)) %>%
+  select(EncID, died_hour_round) %>%
+  distinct() %>%
+  filter(died_hour_round <13) %>%
+  mutate(died_hour = floor(died_hour_round)) %>%
+  group_by(died_hour) %>%
+  summarize(n = n()) %>%
+  ungroup()%>%
+  mutate(sum = cumsum(n)) %>%
+  mutate(alive = 12842-sum, event_name='Alive') %>%
+  select(event_name, died_hour, alive) %>%
+  rename("n" = "alive", 'event_hour' = 'died_hour') 
+  
+per_hr = rbind(per_hr_count, alive_hr)
+
+ggplot(data=per_hr, aes(x=event_hour, y=n, group=event_name)) +
   geom_line(aes(color=event_name))+
   geom_point(aes(color=event_name))+
   xlab('event_hr') +
   ylab('number of patients')+
   ggtitle('Number of Patients per Event per Hour')+
   theme_bw()
-
 ```
 
+```{r}
+ggplot(df_clean, aes(x=as.factor(event_hour), y=event_value)) + 
+  geom_boxplot(outlier.size=1) +
+  facet_wrap(~event_name, scales = "free") +
+  xlab('Hour from Admission') +
+  ylab('Vitals Value') +
+  ggtitle('Vitals Trajectory') +
+  theme_bw()
+```
