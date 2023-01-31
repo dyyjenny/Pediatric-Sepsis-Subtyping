@@ -1,0 +1,192 @@
+---
+title: "sepsis_eda_cleaning"
+output: html_document
+date: "2023-01-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(tidyr)
+```
+
+```{r}
+df = read.csv(file = "./mods_day1_12hr.csv")
+df
+```
+
+```{r}
+tmp = df %>%
+  group_by(EncID) %>% 
+  filter(row_number()==1) %>%
+  mutate(died_hr_round = floor(died_hour))
+
+summary(tmp$died_hour)
+
+nrow(tmp %>%
+       filter(died_hr_round <=6))/
+  nrow(tmp %>%
+         filter(!is.na(died_hr_round)))
+
+nrow(tmp %>%
+       filter(died_hr_round <=12))/
+  nrow(tmp %>%
+         filter(!is.na(died_hr_round)))
+
+ggplot(tmp, aes(x=died_hr_round)) + 
+  geom_histogram(binwidth=1) +
+  ggtitle('Hour from Admission to Death (MODS=1 on Day1 Patients)')+
+  theme_bw()
+
+ggplot(tmp, aes(x=died_hr_round)) + 
+  geom_histogram(binwidth=1) +
+  xlim(0,168) +
+  ggtitle('Hour to Death 7-Day Zoom in')+
+  theme_bw()
+
+ggplot(tmp, aes(x=died_hr_round)) + 
+  geom_histogram(binwidth=1) +
+  xlim(0,72) +
+  ggtitle('Hour to Death 3-Day Zoom in') + 
+  geom_vline(xintercept = 6, color='red', linetype = "longdash") +
+  geom_vline(xintercept = 12, color='blue') +
+  theme_bw()
+
+```
+
+
+```{r}
+age_sum = tmp %>%
+  group_by(age_group) %>%
+  summarise(n = n())%>%
+  mutate (order = c(1,3,6,2,4,5)) %>%
+  ungroup()%>%
+  arrange(order)
+
+ggplot(data=age_sum, aes(x=fct_reorder(age_group, order), y=n)) +
+  geom_bar(stat="identity") +
+  xlab('age_group') +
+  ylab('count')+
+  ggtitle('Patient in Each Age Group')+
+  theme_bw()
+
+age_sum2 = gather(tmp %>%
+  group_by(age_group) %>%
+  summarise(mods_day7 = sum(mods_day7)/n(),
+            died_in_hosp = sum(died_in_hosp)/n())%>%
+  mutate (order = c(1,3,6,2,4,5)) %>%
+  ungroup()%>%
+  arrange(order), key = 'count_type', value = 'value',2:3)
+
+ggplot(data=age_sum2, aes(x=fct_reorder(age_group, order), y=value, fill=count_type)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  xlab('age_group') +
+  ylab('proportion of age group')+
+  ggtitle('Ratio of Death in Hospital and MODS Day7 per Age Group')+
+  theme_bw()
+
+age_died_time = gather(tmp %>%
+  group_by(age_group) %>%
+  summarise(died_time_mean = mean(died_hour,na.rm=TRUE),
+            died_time_median = median(died_hour,na.rm=TRUE))  %>%
+  mutate (order = c(1,3,6,2,4,5)) %>%
+  ungroup()%>%
+  arrange(order), key = 'statistic', value = 'value',2:3)
+
+ggplot(data=age_died_time, aes(x=fct_reorder(age_group, order), y=value, group=statistic)) +
+  geom_line(aes(color=statistic))+
+  geom_point(aes(color=statistic))+
+  xlab('age_group') +
+  ylab('hour')+
+  ggtitle('Death Time from Admission (Hr) by Age Group')+
+  theme_bw()
+
+```
+
+```{r}
+per_hr_count = df %>%
+  mutate(event_hr_floor = floor(event_hour)) %>%
+  group_by(event_name, event_hr_floor) %>%
+  summarize(n = n_distinct(EncID)) 
+
+ggplot(data=per_hr_count, aes(x=event_hr_floor, y=n, group=event_name)) +
+  geom_line(aes(color=event_name))+
+  geom_point(aes(color=event_name))+
+  xlab('event_hr') +
+  ylab('number of patients')+
+  ggtitle('Number of Patients per Event per Hour')+
+  theme_bw()
+
+```
+map = df %>%
+  filter(event_name=='MAP') %>%
+  mutate(event_hr_floor = floor(event_hour)) %>%
+  group_by(EncID, event_hr_floor) %>%
+  summarize(n = n()) %>%
+  ungroup()%>%
+  group_by(event_hr_floor) %>%
+  summarize(mean = mean(n),
+         median = median(n),
+         min = min(n),
+         max = max(n)) 
+map
+
+sbp = df %>%
+  filter(event_name=='SBP') %>%
+  mutate(event_hr_floor = floor(event_hour)) %>%
+  group_by(EncID, event_hr_floor) %>%
+  summarize(n = n()) %>%
+  ungroup()%>%
+  group_by(event_hr_floor) %>%
+  summarize(mean = mean(n),
+         median = median(n),
+         min = min(n),
+         max = max(n)) 
+sbp
+
+resp = df %>%
+  filter(event_name=='RESP_RATE') %>%
+  mutate(event_hr_floor = floor(event_hour)) %>%
+  group_by(EncID, event_hr_floor) %>%
+  summarize(n = n()) %>%
+  ungroup()%>%
+  group_by(event_hr_floor) %>%
+  summarize(mean = mean(n),
+         median = median(n),
+         min = min(n),
+         max = max(n)) 
+resp
+
+temp = df %>%
+  filter(event_name=='TEMP') %>%
+  mutate(event_hr_floor = floor(event_hour)) %>%
+  group_by(EncID, event_hr_floor) %>%
+  summarize(n = n()) %>%
+  ungroup()%>%
+  group_by(event_hr_floor) %>%
+  summarize(mean = mean(n),
+         median = median(n),
+         min = min(n),
+         max = max(n)) 
+temp
+
+sf = df %>%
+  filter(event_name=='SF_RATIO') %>%
+  mutate(event_hr_floor = floor(event_hour)) %>%
+  group_by(EncID, event_hr_floor) %>%
+  summarize(n = n()) %>%
+  ungroup()%>%
+  group_by(event_hr_floor) %>%
+  summarize(mean = mean(n),
+         median = median(n),
+         min = min(n),
+         max = max(n)) 
+sf
+```
+
+```{r}
+```
+
+
