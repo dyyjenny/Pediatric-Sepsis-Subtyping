@@ -14,8 +14,9 @@ library(tidyr)
 
 ```{r}
 df = read.csv(file = "./mods_day1_12hr.csv")
-df
+df_clean = read.csv(file = "./vitals_trajectory_cleaned.csv")
 ```
+
 
 ```{r}
 tmp = df %>%
@@ -106,12 +107,11 @@ ggplot(data=age_died_time, aes(x=fct_reorder(age_group, order), y=value, group=s
 ```
 
 ```{r}
-per_hr_count = df %>%
-  mutate(event_hr_floor = floor(event_hour)) %>%
-  group_by(event_name, event_hr_floor) %>%
+per_hr_count = df_clean %>%
+  group_by(event_name, event_hour) %>%
   summarize(n = n_distinct(EncID)) 
 
-ggplot(data=per_hr_count, aes(x=event_hr_floor, y=n, group=event_name)) +
+ggplot(data=per_hr_count, aes(x=event_hour, y=n, group=event_name)) +
   geom_line(aes(color=event_name))+
   geom_point(aes(color=event_name))+
   xlab('event_hr') +
@@ -120,73 +120,4 @@ ggplot(data=per_hr_count, aes(x=event_hr_floor, y=n, group=event_name)) +
   theme_bw()
 
 ```
-map = df %>%
-  filter(event_name=='MAP') %>%
-  mutate(event_hr_floor = floor(event_hour)) %>%
-  group_by(EncID, event_hr_floor) %>%
-  summarize(n = n()) %>%
-  ungroup()%>%
-  group_by(event_hr_floor) %>%
-  summarize(mean = mean(n),
-         median = median(n),
-         min = min(n),
-         max = max(n)) 
-map
-
-sbp = df %>%
-  filter(event_name=='SBP') %>%
-  mutate(event_hr_floor = floor(event_hour)) %>%
-  group_by(EncID, event_hr_floor) %>%
-  summarize(n = n()) %>%
-  ungroup()%>%
-  group_by(event_hr_floor) %>%
-  summarize(mean = mean(n),
-         median = median(n),
-         min = min(n),
-         max = max(n)) 
-sbp
-
-resp = df %>%
-  filter(event_name=='RESP_RATE') %>%
-  mutate(event_hr_floor = floor(event_hour)) %>%
-  group_by(EncID, event_hr_floor) %>%
-  summarize(n = n()) %>%
-  ungroup()%>%
-  group_by(event_hr_floor) %>%
-  summarize(mean = mean(n),
-         median = median(n),
-         min = min(n),
-         max = max(n)) 
-resp
-
-temp = df %>%
-  filter(event_name=='TEMP') %>%
-  mutate(event_hr_floor = floor(event_hour)) %>%
-  group_by(EncID, event_hr_floor) %>%
-  summarize(n = n()) %>%
-  ungroup()%>%
-  group_by(event_hr_floor) %>%
-  summarize(mean = mean(n),
-         median = median(n),
-         min = min(n),
-         max = max(n)) 
-temp
-
-sf = df %>%
-  filter(event_name=='SF_RATIO') %>%
-  mutate(event_hr_floor = floor(event_hour)) %>%
-  group_by(EncID, event_hr_floor) %>%
-  summarize(n = n()) %>%
-  ungroup()%>%
-  group_by(event_hr_floor) %>%
-  summarize(mean = mean(n),
-         median = median(n),
-         min = min(n),
-         max = max(n)) 
-sf
-```
-
-```{r}
-```
-
 
