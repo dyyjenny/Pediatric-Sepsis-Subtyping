@@ -25,11 +25,6 @@ tmp = df_clean %>%
 summary(tmp$died_hour_round)
 
 nrow(tmp %>%
-       filter(died_hour_round<=6))/
-  nrow(tmp %>%
-         filter(!is.na(died_hour_round)))
-
-nrow(tmp %>%
        filter(died_hour_round <=12))/
   nrow(tmp %>%
          filter(!is.na(died_hour_round)))
@@ -43,13 +38,6 @@ ggplot(tmp, aes(x=died_hour_round)) +
   geom_histogram(binwidth=1) +
   xlim(0,168) +
   ggtitle('Hour to Death 7-Day Zoom in')+
-  theme_bw()
-
-ggplot(tmp, aes(x=died_hour_round)) + 
-  geom_histogram(binwidth=1) +
-  xlim(0,72) +
-  ggtitle('Hour to Death 3-Day Zoom in') + 
-  geom_vline(xintercept = 6, color='red', linetype = "longdash") +
   geom_vline(xintercept = 12, color='blue') +
   theme_bw()
 
@@ -151,6 +139,14 @@ ggplot(data=per_hr, aes(x=event_hour, y=n, group=event_name)) +
 ```
 
 ```{r}
+ggplot(df_clean, aes(x=as.factor(event_hour), y=event_value_norm)) + 
+  geom_boxplot(outlier.size=1) +
+  facet_wrap(~event_name, scales = "free") +
+  xlab('Hour from Admission') +
+  ylab('Vitals Value Normalized by Age') +
+  ggtitle('Vitals Trajectory') +
+  theme_bw()
+
 ggplot(df_clean, aes(x=as.factor(event_hour), y=event_value)) + 
   geom_boxplot(outlier.size=1) +
   facet_wrap(~event_name, scales = "free") +
@@ -159,3 +155,4 @@ ggplot(df_clean, aes(x=as.factor(event_hour), y=event_value)) +
   ggtitle('Vitals Trajectory') +
   theme_bw()
 ```
+
