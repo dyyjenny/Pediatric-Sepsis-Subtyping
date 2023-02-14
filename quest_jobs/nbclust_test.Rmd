@@ -1,0 +1,31 @@
+---
+title: "nbclust_test"
+output: html_document
+date: "2023-02-10"
+---
+
+```{r}
+library(datasets)
+iris = iris %>%
+  select(Sepal.Length,Sepal.Width,Petal.Length,Petal.Width)
+
+list.methods = c( "kl", "ch", "hartigan", "ccc","scott", "marriot", "trcovw", "tracew", "friedman", "rubin", "cindex", "db", "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw")
+
+#nb = NbClust(iris, distance = "euclidean",
+                #min.nc = 2, max.nc = 4,
+                #method = "ward.D", index = 'duda')
+#print(nb)
+             
+for(i in 1:length(list.methods)){
+  nb = try(NbClust(iris, distance = "euclidean",
+                min.nc = 2, max.nc = 4,
+                method = "ward.D", index = list.methods[i]))
+  if(inherits(nb, "try-error"))
+    {
+      next
+    }
+  cat(nb$Best.nc[1], list.methods[i],'\n')
+  testcon <- file(description = "nbclust_out.txt", open = "a")
+  cat(paste0(nb$Best.nc[1], ' ', list.methods[i]), file= testcon, append=TRUE,sep="\n")
+  close(testcon)}
+```
