@@ -1,0 +1,219 @@
+---
+title: "cluster_result_analysis"
+output: html_document
+date: "2023-02-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(reshape2) 
+library(cowplot)
+```
+
+```{r}
+labs = read.csv('./vitals_labs_cluster.csv')
+labs
+```
+
+```{r}
+interv_orig = labs %>%
+  select(cluster_label_orig, malignancy, transplant, vent, crrt, ecmo, vaso_drug, mods_day7,died_in_hosp)  %>%
+  group_by(cluster_label_orig) %>%
+  summarize (malignancy = sum(malignancy)/n(),
+             transplant = sum(transplant)/n(),
+             vent = sum(vent)/n(),
+             crrt= sum(crrt)/n(),
+             ecmo= sum(ecmo)/n(),
+             vaso = sum(vaso_drug)/n(),
+             mods_day7 = sum(mods_day7)/n(),
+             died_hosp = sum(died_in_hosp)/n(),
+             )
+cluster_interv_melt_orig <- melt(interv_orig , id = "cluster_label_orig")
+
+
+ggplot(data=cluster_interv_melt_orig, aes(x=variable, y=value, fill=as.factor(cluster_label_orig))) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Intervention') +
+  ylab('Percentage within Cluster')+
+  ggtitle('Original Intervention by Cluster')+
+  theme_bw()+ 
+  theme(axis.text.x = element_text(size = 8))
+
+```
+
+
+```{r}
+gender_cluster = labs %>%
+  group_by(cluster_label_orig) %>%
+  count(gender)
+
+race_cluster = labs %>%
+  group_by(cluster_label_orig) %>%
+  count(race_ethnicity)
+
+age_cluster = labs %>%
+  group_by(cluster_label_orig) %>%
+  count(age_group)
+
+adm_cluster = labs %>%
+  group_by(cluster_label_orig) %>%
+  count(admission_from)
+
+tech_cluster = labs %>%
+  group_by(cluster_label_orig) %>%
+  count(tech_dep)
+
+ggplot(data=gender_cluster, aes(x=as.factor(cluster_label_orig), y=n, fill=gender)) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Cluster') +
+  ylab('Count')+
+  ggtitle('Gender by Cluster')+
+  theme_bw()
+
+ggplot(data=race_cluster, aes(x=as.factor(cluster_label_orig), y=n, fill=race_ethnicity)) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Cluster') +
+  ylab('Count')+
+  ggtitle('Race by Cluster')+
+  theme_bw()
+
+ggplot(data=age_cluster, aes(x=as.factor(cluster_label_orig), y=n, fill=age_group)) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Cluster') +
+  ylab('Count')+
+  ggtitle('Age Count by Cluster')+
+  theme_bw()
+
+ggplot(data=adm_cluster, aes(x=as.factor(cluster_label_orig), y=n, fill=admission_from)) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Cluster') +
+  ylab('Count')+
+  ggtitle('Admission Source by Cluster')+
+  theme_bw()
+
+ggplot(data=tech_cluster, aes(x=as.factor(cluster_label_orig), y=n, fill=as.factor(tech_dep))) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Cluster') +
+  ylab('Count')+
+  ggtitle('Tech Dept by Cluster')+
+  theme_bw() + 
+  scale_fill_discrete(name = "Tech Dept ")
+
+#plot_grid(p1, p2, p3, p4, p5, labels = c('A', 'B','C','D','E'), label_size = 12)
+```
+
+```{r}
+# first part of labs
+p1 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=pco2,color=as.factor(cluster_label_orig)))+ 
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(25,100)
+
+p2 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=lact,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,9)
+
+p3 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=ph_min,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(6.6,7.5)
+
+p4 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=gluc_max,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,450)
+
+p5 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=inr,color=as.factor(cluster_label_orig)))+ 
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0.5,3)
+
+p6 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=ptt,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(10,70)
+
+p7 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=d_dimer,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,30)
+
+p8 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=plts,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw() +
+  theme(legend.position = "none") + ylim(0,450)
+
+
+plot_grid(p1, p2, p3, p4, p5,p6,p7,p8, labels = c('A', 'B','C','D','E','F','G','H'), label_size = 12)
+
+```
+
+```{r}
+# second part of labs
+p1 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=alt,color=as.factor(cluster_label_orig)))+ 
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,125)
+
+p2 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=ast,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,175)
+
+p3 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=bili,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,2)
+
+p4 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=creat,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,1.2)
+
+p5 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=bun,color=as.factor(cluster_label_orig)))+ 
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,40)
+
+p6 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=wbc_max,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,35)
+
+p7 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=bands,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+ ylim(0,50)
+
+p8 <- ggplot(labs, aes(x=as.factor(cluster_label_orig), y=alc,color=as.factor(cluster_label_orig)))+
+  xlab('') +
+  geom_boxplot()+
+  theme_bw() +
+  theme(legend.position = "none") + ylim(0,4)
+
+
+plot_grid(p1, p2, p3, p4, p5,p6,p7,p8, labels = c('A', 'B','C','D','E','F','G','H'), label_size = 12)
+
+```

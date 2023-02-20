@@ -160,7 +160,7 @@ ggplot(df_clean, aes(x=as.factor(event_hour), y=event_value)) +
 ```
 
 ```{r}
-df_clus = read.csv(file = './vitals_trajectory_cluster_label.csv')
+df_clus = read.csv(file = './vitals_trajectory_cluster_label_2cluster.csv')
 ```
 
 ```{r}
@@ -168,8 +168,8 @@ head(df_clus)
 ```
 
 ```{r}
-cluster_sum = df_clus %>%
-  group_by(cluster_label, event_hour ) %>%
+cluster_sum_orig = df_clus %>%
+  group_by(cluster_label_orig, event_hour ) %>%
   summarize (temp_mean = mean(TEMPImputed,na.rm=TRUE), 
              sf_ratio_mean = mean(SF_RATIOImputed,na.rm=TRUE), 
              sbp_mean = mean(SBPImputed,na.rm=TRUE), 
@@ -177,38 +177,116 @@ cluster_sum = df_clus %>%
              pulse_mean = mean(PULSEImputed,na.rm=TRUE),
              map_mean = mean(MAPImputed,na.rm=TRUE),
              )
-cluster_sum_melt <- melt(cluster_sum, id = c("cluster_label","event_hour"))
-```
+cluster_sum_melt_orig <- melt(cluster_sum_orig, id = c("cluster_label_orig","event_hour"))
 
-```{r}
-ggplot(data=cluster_sum_melt, aes(x=event_hour, y=value, group=as.factor(cluster_label))) +
-  geom_line(aes(color=as.factor(cluster_label)))+
-  geom_point(aes(color=as.factor(cluster_label)))+
-  xlab('event_hr') +
-  ylab('mean measurement value')+
-  ggtitle('Mean Measurement Value over Time by Cluster')+
+cluster_sum_v2 = df_clus %>%
+  group_by(cluster_label_v2, event_hour ) %>%
+  summarize (temp_mean = mean(TEMPImputed,na.rm=TRUE), 
+             sf_ratio_mean = mean(SF_RATIOImputed,na.rm=TRUE), 
+             sbp_mean = mean(SBPImputed,na.rm=TRUE), 
+             resp_mean = mean(RESP_RATEImputed,na.rm=TRUE), 
+             pulse_mean = mean(PULSEImputed,na.rm=TRUE),
+             map_mean = mean(MAPImputed,na.rm=TRUE),
+             )
+cluster_sum_melt_v2 <- melt(cluster_sum_v2, id = c("cluster_label_v2","event_hour"))
+
+cluster_sum_pen2 = df_clus %>%
+  group_by(cluster_label_pen2, event_hour ) %>%
+  summarize (temp_mean = mean(TEMPImputed,na.rm=TRUE), 
+             sf_ratio_mean = mean(SF_RATIOImputed,na.rm=TRUE), 
+             sbp_mean = mean(SBPImputed,na.rm=TRUE), 
+             resp_mean = mean(RESP_RATEImputed,na.rm=TRUE), 
+             pulse_mean = mean(PULSEImputed,na.rm=TRUE),
+             map_mean = mean(MAPImputed,na.rm=TRUE),
+             )
+cluster_sum_melt_pen2 <- melt(cluster_sum_pen2, id = c("cluster_label_pen2","event_hour"))
+
+
+ggplot(data=cluster_sum_melt_orig, aes(x=event_hour, y=value, group=as.factor(cluster_label_orig))) +
+  geom_line(aes(color=as.factor(cluster_label_orig)))+
+  geom_point(aes(color=as.factor(cluster_label_orig)))+
+  xlab('Event Hour') +
+  ylab('Mean Measurement Value (Normalized)')+
+  ggtitle('Original Mean Measurement Value over Time by Cluster')+
   theme_bw() +
-  facet_wrap(~variable)
+  facet_wrap(~variable) +
+  xlim(0,13)
+
+ggplot(data=cluster_sum_melt_v2, aes(x=event_hour, y=value, group=as.factor(cluster_label_v2))) +
+  geom_line(aes(color=as.factor(cluster_label_v2)))+
+  geom_point(aes(color=as.factor(cluster_label_v2)))+
+  xlab('Event Hour') +
+  ylab('Mean Measurement Value (Normalized)')+
+  ggtitle('New Data Pen5 Mean Measurement Value over Time by Cluster')+
+  theme_bw() +
+  facet_wrap(~variable) +
+  xlim(0,13)
+
+
+ggplot(data=cluster_sum_melt_pen2, aes(x=event_hour, y=value, group=as.factor(cluster_label_pen2))) +
+  geom_line(aes(color=as.factor(cluster_label_pen2)))+
+  geom_point(aes(color=as.factor(cluster_label_pen2)))+
+  xlab('Event Hour') +
+  ylab('Mean Measurement Value (Normalized)')+
+  ggtitle('New Data Pen2 Mean Measurement Value over Time by Cluster')+
+  theme_bw() +
+  facet_wrap(~variable) +
+  xlim(0,13)
 ```
 
 ```{r}
-cluster_outcome = df_clus %>%
+cluster_outcome_orig = df_clus %>%
   group_by(EncID) %>%
   filter(row_number()==1) %>%
   ungroup() %>%
-  group_by(cluster_label) %>%
+  group_by(cluster_label_orig) %>%
   summarize (mods_day7_mean = sum(mods_day7)/n(), 
              died_in_hosp_mean = sum(died_in_hosp)/n()
              )
-cluster_outcome_melt <- melt(cluster_outcome, id = "cluster_label")
+cluster_outcome_melt_orig <- melt(cluster_outcome_orig, id = "cluster_label_orig")
 
-ggplot(data=cluster_outcome_melt, aes(x=variable, y=value, fill=as.factor(cluster_label))) +
+cluster_outcome_v2 = df_clus %>%
+  group_by(EncID) %>%
+  filter(row_number()==1) %>%
+  ungroup() %>%
+  group_by(cluster_label_v2) %>%
+  summarize (mods_day7_mean = sum(mods_day7)/n(), 
+             died_in_hosp_mean = sum(died_in_hosp)/n()
+             )
+cluster_outcome_melt_v2 <- melt(cluster_outcome_v2, id = "cluster_label_v2")
+
+cluster_outcome_pen2 = df_clus %>%
+  group_by(EncID) %>%
+  filter(row_number()==1) %>%
+  ungroup() %>%
+  group_by(cluster_label_pen2) %>%
+  summarize (mods_day7_mean = sum(mods_day7)/n(), 
+             died_in_hosp_mean = sum(died_in_hosp)/n()
+             )
+cluster_outcome_melt_pen2 <- melt(cluster_outcome_pen2, id = "cluster_label_pen2")
+
+ggplot(data=cluster_outcome_melt_orig, aes(x=variable, y=value, fill=as.factor(cluster_label_orig))) +
   geom_bar(stat="identity", color="black", position=position_dodge())+
   xlab('Outcome') +
-  ylab('Percentage within cluster group')+
-  ggtitle('Outcome by Cluster')+
+  ylab('Percentage within Cluster')+
+  ggtitle('Original Outcome by Cluster')+
+  theme_bw()
+
+ggplot(data=cluster_outcome_melt_v2, aes(x=variable, y=value, fill=as.factor(cluster_label_v2))) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Outcome') +
+  ylab('Percentage within Cluster')+
+  ggtitle('New Data Pen5 Outcome by Cluster')+
+  theme_bw()
+
+ggplot(data=cluster_outcome_melt_pen2, aes(x=variable, y=value, fill=as.factor(cluster_label_pen2))) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Outcome') +
+  ylab('Percentage within Cluster')+
+  ggtitle('New Data Pen2 Outcome by Cluster')+
   theme_bw()
 ```
+
 
   
 ```{r}
@@ -225,21 +303,28 @@ cluster_age2= df_clus %>%
   distinct() %>%
   arrange(age_group, cluster_label)%>%
   ungroup()%>%
-  mutate(order = c(1,1,1,1,3,3,3,3,6,6,6,6,2,2,2,2,4,4,4,4,5,5,5,5) )
+  mutate(order = c(1,1,3,3,6,6,2,2,4,4,5,5))
 
 
 ggplot(cluster_age2, aes(fill=fct_reorder(age_group, order), y=per, x=cluster_label)) + 
   geom_bar(position="fill", stat="identity") +
-  ylab('percent within group')+
-  xlab('cluster label') +
-  ggtitle('Cluster Age Percentage')+
+  ylab('Percentage within Cluster')+
+  xlab('Cluster') +
+  ggtitle('Cluster Age Distribution')+
   theme_bw() 
 ```
 
 ```{r}
+death_time_cluster = df_clus %>%
+  select(EncID, died_hour_round,cluster_label) %>%
+  distinct() %>%
+  drop_na() %>%
+  arrange(died_hour_round) %>%
+  mutate(idx = row_number())
 
-ggplot(df_clus, aes(x=as.factor(cluster_label), y=died_hour_round, fill=as.factor(cluster_label))) + 
-  geom_boxplot(outlier.size=1) +
+ ggplot(death_time_cluster, aes(x=as.factor(cluster_label), y=died_hour_round, fill=as.factor(cluster_label))) + 
+  geom_violin() +
+  geom_boxplot(width=0.1, alpha=0.7) +
   xlab('Cluster') +
   ylab('Recorded Death Time') +
   ylim(0,1440) +
@@ -248,24 +333,65 @@ ggplot(df_clus, aes(x=as.factor(cluster_label), y=died_hour_round, fill=as.facto
 ```
 
 ```{r}
-df = read.csv('/home/ydn4687/sepsis/dtw_out.csv')
-
-#res<-NbClust(df, distance = "euclidean", min.nc=2, max.nc=4,
-            #method = "ward.D", index = "all")
-
-list.methods = c( "kl", "ch", "hartigan", "ccc","scott", "marriot", "trcovw", "tracew", "friedman", "rubin", "cindex", "db", "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw")
-
-#tabla = as.data.frame(matrix(ncol = 2, nrow = length(lista.methods)))
-#names(tabla) = "euclidean"
-
-for(i in 1:length(list.methods)){
-    nb = NbClust(df, distance = "euclidean",
-                 min.nc = 2, max.nc = 6,
-                 method = "ward.D", index = list.methods[i])
-    write.csv(nb$Best.nc[1], paste('/home/ydn4687/sepsis/nbclust',list.methods[i], 'csv', sep = '.'))
-}
-
+labs = read.csv('./vitals_labs_cluster.csv')
+labs
 ```
 
+```{r}
+
+interv_orig = labs %>%
+  select(cluster_label_orig, malignancy, transplant, vent, crrt, ecmo, vaso_drug)  %>%
+  group_by(cluster_label_orig) %>%
+  summarize (vent_mean = sum(vent)/n(),
+             crrt_mean = sum(crrt)/n(),
+             ecmo_mean = sum(ecmo)/n(),
+             vaso_mean = sum(vaso_drug)/n()
+             )
+cluster_interv_melt_orig <- melt(interv_orig , id = "cluster_label_orig")
+
+interv_v2 = labs %>%
+  select(cluster_label_v2, malignancy, transplant, vent, crrt, ecmo, vaso_drug)  %>%
+  group_by(cluster_label_v2) %>%
+  summarize (vent_mean = sum(vent)/n(),
+             crrt_mean = sum(crrt)/n(),
+             ecmo_mean = sum(ecmo)/n(),
+             vaso_mean = sum(vaso_drug)/n()
+             )
+cluster_interv_melt_v2 <- melt(interv_v2 , id = "cluster_label_v2")
+
+interv_pen2 = labs %>%
+  select(cluster_label_pen2, malignancy, transplant, vent, crrt, ecmo, vaso_drug)  %>%
+  group_by(cluster_label_pen2) %>%
+  summarize (vent_mean = sum(vent)/n(),
+             crrt_mean = sum(crrt)/n(),
+             ecmo_mean = sum(ecmo)/n(),
+             vaso_mean = sum(vaso_drug)/n()
+             )
+cluster_interv_melt_pen2 <- melt(interv_pen2 , id = "cluster_label_pen2")
+
+ggplot(data=cluster_interv_melt_orig, aes(x=variable, y=value, fill=as.factor(cluster_label_orig))) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Intervention') +
+  ylab('Percentage within Cluster')+
+  ggtitle('Original Intervention by Cluster')+
+  theme_bw()
+
+ggplot(data=cluster_interv_melt_v2, aes(x=variable, y=value, fill=as.factor(cluster_label_v2))) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Intervention') +
+  ylab('Percentage within Cluster')+
+  ggtitle('New Data Pen5 Intervention by Cluster')+
+  theme_bw()
 
 
+ggplot(data=cluster_interv_melt_pen2, aes(x=variable, y=value, fill=as.factor(cluster_label_pen2))) +
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  xlab('Intervention') +
+  ylab('Percentage within Cluster')+
+  ggtitle('New Data Pen2 Intervention by Cluster')+
+  theme_bw()
+
+```
+```{r}
+
+```
